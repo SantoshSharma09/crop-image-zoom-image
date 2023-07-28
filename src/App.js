@@ -1,7 +1,7 @@
 import React from "react";
 import "react-image-crop/dist/ReactCrop.css";
 import ReactImageMagnify from "react-image-magnify";
-import { ImageCropPreviewDownload } from "./component/ImageCrop";
+import ImageCropPreview from "./component/ImageCrop";
 
 function App() {
   return (
@@ -25,7 +25,7 @@ function App() {
       </div>
       <h1>Crop Image</h1>
       <div>
-        <ImageCropPreviewDownload />
+        <ImageCropPreview />
       </div>
     </div>
   );

@@ -1,91 +1,114 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useRef, useState } from "react";
 import ReactCrop from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import html2canvas from "html2canvas";
-import download from "downloadjs";
-import { useEffect } from "react";
 
-export const ImageCropPreviewDownload = () => {
-  const [upImg, setUpImg] = useState();
-  const [crop, setCrop] = useState({ aspect: 1 / 1 }); // You can change the aspect ratio as per your requirement
-  const [croppedImageUrl, setCroppedImageUrl] = useState(null);
-  const imgRef = useRef(null);
+const ImageCropPreview = () => {
+  const [crop, setCrop] = useState({ unit: "%", width: 30, aspect: 1 });
+  const [imageSrc, setImageSrc] = useState(null);
+  const [croppedImage, setCroppedImage] = useState(null);
+  const imageRef = useRef(null);
+
+  const onSelectFile = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => setImageSrc(reader.result));
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
 
   const onImageLoaded = (image) => {
-    // When the image is loaded, you can set it up for cropping
-    imgRef.current = image;
+    // You can do something when the image is loaded, if needed.
+    imageRef.current = image;
   };
 
-  const onCropComplete = () => {
-    // You can do something with the cropped image here if needed
-    console.log(crop);
-    generateCropPreview();
+  const onCropComplete = (crop) => {
+    makeClientCrop(crop);
   };
 
-  useEffect(() => {
-    onCropComplete();
-  }, []);
-
-  const generateCropPreview = () => {
-    if (imgRef.current && crop.width && crop.height) {
-      html2canvas(imgRef.current, {
-        width: crop.width,
-        height: crop.height,
-        x: crop.x,
-        y: crop.y,
-      }).then((canvas) => {
-        // Convert the canvas to a data URL and set it for preview
-        const croppedImageURL = canvas.toDataURL();
-        setCroppedImageUrl(canvas.toDataURL());
-      });
+  const makeClientCrop = async (crop) => {
+    if (imageSrc && crop.width && crop.height) {
+      try {
+        const croppedImage = await getCroppedImg(imageSrc, crop);
+        setCroppedImage(croppedImage);
+      } catch (error) {
+        console.error("Error cropping image:", error);
+      }
     }
   };
 
-  const downloadCroppedImage = () => {
-    if (croppedImageUrl) {
-      // Use the downloadjs library to download the cropped image
-      download(croppedImageUrl, "croppedImage.png");
+  const getCroppedImg = (imageSrc, crop) => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.src = imageSrc;
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const scaleX = image.naturalWidth / image.width;
+        const scaleY = image.naturalHeight / image.height;
+        canvas.width = crop.width;
+        canvas.height = crop.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(
+          image,
+          crop.x * scaleX,
+          crop.y * scaleY,
+          crop.width * scaleX,
+          crop.height * scaleY,
+          0,
+          0,
+          crop.width,
+          crop.height
+        );
+
+        resolve(canvas.toDataURL("image/jpeg"));
+      };
+      image.onerror = (error) => {
+        reject(error);
+      };
+    });
+  };
+
+  const onDownloadImage = async () => {
+    try {
+      const canvas = await html2canvas(imageRef.current);
+      const dataURL = canvas.toDataURL("image/jpeg");
+
+      const link = document.createElement("a");
+      link.download = "downloaded_image.jpg";
+      link.href = dataURL;
+      link.click();
+    } catch (error) {
+      console.error("Error generating downloadable image:", error.message);
     }
   };
 
+  console.log(imageRef.current);
+  console.log(croppedImage);
   return (
     <div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          if (e.target.files && e.target.files.length > 0) {
-            const reader = new FileReader();
-            reader.addEventListener("load", () => setUpImg(reader.result));
-            reader.readAsDataURL(e.target.files[0]);
-          }
-        }}
-      />
-      <div>
-        {upImg && (
-          <>
-            <ReactCrop
-              src={upImg}
-              crop={crop}
-              onChange={setCrop}
-              onComplete={onCropComplete}
-              onImageLoaded={onImageLoaded}
-              style={{ width: "800px", height: "800px" }}
-            />
-            {croppedImageUrl && (
-              <div>
-                <h2>Cropped Image Preview</h2>
-                <img src={croppedImageUrl} alt="Cropped Preview" />
-                <div style={{ marginBottom: "50px" }}>
-                  <button onClick={downloadCroppedImage}>
-                    Download Cropped Image
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      <input type="file" onChange={onSelectFile} />
+      {imageSrc && (
+        <ReactCrop
+          src={imageSrc}
+          crop={crop}
+          onChange={(c) => setCrop(c)}
+          onImageLoaded={onImageLoaded}
+          onComplete={onCropComplete}
+        >
+          <img src={imageSrc} />
+        </ReactCrop>
+      )}
+      {croppedImage && (
+        <div>
+          <div>
+            {/* Replace this with the image or content you want to download */}
+            <img ref={imageRef} src={croppedImage} alt="Image to download" />
+          </div>
+          <button onClick={onDownloadImage}>Download Image</button>
+        </div>
+      )}
     </div>
   );
 };
+
+export default ImageCropPreview;
