@@ -92,7 +92,7 @@ const ImageCropPreview = () => {
           onChange={(c) => setCrop(c)}
           onImageLoaded={onImageLoaded}
           onComplete={onCropComplete}
-          style={{ display: "flex", margin: "auto" }}
+          style={{ border: "1px solid teal", margin: "auto" }}
         >
           <img src={imageSrc} />
         </ReactCrop>
