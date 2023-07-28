@@ -82,10 +82,8 @@ const ImageCropPreview = () => {
     }
   };
 
-  console.log(imageRef.current);
-  console.log(croppedImage);
   return (
-    <div>
+    <div style={{ display: "grid" }}>
       <input type="file" onChange={onSelectFile} />
       {imageSrc && (
         <ReactCrop
@@ -94,17 +92,29 @@ const ImageCropPreview = () => {
           onChange={(c) => setCrop(c)}
           onImageLoaded={onImageLoaded}
           onComplete={onCropComplete}
+          style={{ display: "flex", margin: "auto" }}
         >
           <img src={imageSrc} />
         </ReactCrop>
       )}
       {croppedImage && (
-        <div>
-          <div>
+        <div style={{ display: "grid", margin: "auto" }}>
+          <h2 style={{ textAlign: "center" }}>Preview Image</h2>
+          <div style={{ display: "flex", margin: "auto" }}>
             {/* Replace this with the image or content you want to download */}
-            <img ref={imageRef} src={croppedImage} alt="Image to download" />
+            <img
+              style={{ display: "flex", margin: "auto" }}
+              ref={imageRef}
+              src={croppedImage}
+              alt="Image to download"
+            />
           </div>
-          <button onClick={onDownloadImage}>Download Image</button>
+          <button
+            style={{ width: "100%", margin: "auto", marginTop: "15px" }}
+            onClick={onDownloadImage}
+          >
+            Download Image
+          </button>
         </div>
       )}
     </div>
